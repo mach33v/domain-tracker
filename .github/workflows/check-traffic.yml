@@ -73,7 +73,7 @@ jobs:
           total  = sum(active.values())
 
           if not active:
-              send("📊 <b>Domain traffic — daily digest</b>\n\nNo visits recorded today yet.")
+              exit(0)  # No visits — stay quiet
           else:
               rows = "\n".join(
                   f"  {'🔥' if v >= 10 else '·'} <b>{d}</b>: {v}"
