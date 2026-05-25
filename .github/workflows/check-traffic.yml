@@ -1,0 +1,83 @@
+name: Traffic Monitor
+
+on:
+  schedule:
+    - cron: '0 14 * * *'   # 9am ET daily digest
+    - cron: '0 */6 * * *'  # every 6 hours spike check
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check traffic and alert
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          IS_DAILY: ${{ github.event.schedule == '0 14 * * *' || github.event_name == 'workflow_dispatch' }}
+        run: |
+          python3 - << 'PYEOF'
+          import json, os, urllib.request, datetime
+
+          with open("stats/counts.json") as f:
+              counts = json.load(f)
+
+          today     = datetime.date.today().isoformat()
+          yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+          is_daily  = os.environ.get("IS_DAILY","false").lower() == "true"
+
+          bot   = os.environ["TELEGRAM_BOT_TOKEN"]
+          chat  = os.environ["TELEGRAM_CHAT_ID"]
+
+          def send(text):
+              urllib.request.urlopen(urllib.request.Request(
+                  f"https://api.telegram.org/bot{bot}/sendMessage",
+                  data=json.dumps({"chat_id": chat, "text": text, "parse_mode": "HTML"}).encode(),
+                  headers={"Content-Type": "application/json"},
+                  method="POST"
+              ))
+
+          # --- Spike detection (every 6h) ---
+          spikes = []
+          for domain, daily in counts.items():
+              today_count = daily.get(today, 0)
+              if today_count == 0:
+                  continue
+              # 7-day average (excluding today)
+              past = sorted(daily.keys())
+              past_counts = [daily[d] for d in past if d != today][-7:]
+              if not past_counts:
+                  baseline = 0
+              else:
+                  baseline = sum(past_counts) / len(past_counts)
+              # Alert if: first real traffic day OR 10x above baseline
+              if baseline == 0 and today_count >= 5:
+                  spikes.append((domain, today_count, None))
+              elif baseline > 0 and today_count >= baseline * 10 and today_count >= 10:
+                  spikes.append((domain, today_count, round(baseline, 1)))
+
+          if spikes:
+              lines = "\n".join(
+                  f"  🔥 <b>{d}</b>: {c} visits today" + (f" (avg {b}/day)" if b else " (first traffic day)")
+                  for d, c, b in spikes
+              )
+              send(f"📈 <b>Traffic spike detected</b>\n\n{lines}")
+
+          # --- Daily digest (9am only) ---
+          if not is_daily:
+              exit(0)
+
+          active = {d: v.get(today, 0) for d, v in counts.items() if v.get(today, 0) > 0}
+          total  = sum(active.values())
+
+          if not active:
+              send("📊 <b>Domain traffic — daily digest</b>\n\nNo visits recorded today yet.")
+          else:
+              rows = "\n".join(
+                  f"  {'🔥' if v >= 10 else '·'} <b>{d}</b>: {v}"
+                  for d, v in sorted(active.items(), key=lambda x: -x[1])
+              )
+              send(f"📊 <b>Domain traffic — {today}</b>\n\n{rows}\n\n<b>Total:</b> {total} visits")
+          PYEOF
