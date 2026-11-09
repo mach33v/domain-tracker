@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sequence Drills</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a single exam card centred in a quiet field; the sequence is the hero, the timer ring sits beside it like a proctor's stopwatch. */
+:root {
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --ink: #141b2d;
+  --muted: #5d6679;
+  --line: #d8dde6;
+  --accent: #2f4fd8;
+  --accent-soft: #e3e8fb;
+  --good: #1b7f4b;
+  --good-soft: #e1f3e8;
+  --warn: #b26a00;
+  --bad: #c62828;
+  --bad-soft: #fbe5e5;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f131c; --surface: #171d2a; --ink: #e8ecf4; --muted: #98a2b6; --line: #2a3242;
+  --accent: #7d95ff; --accent-soft: #232c4a; --good: #4cc488; --good-soft: #15301f;
+  --warn: #f0a63a; --bad: #ff6b6b; --bad-soft: #3a1b1d; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f131c; --surface: #171d2a; --ink: #e8ecf4; --muted: #98a2b6; --line: #2a3242;
+  --accent: #7d95ff; --accent-soft: #232c4a; --good: #4cc488; --good-soft: #15301f;
+  --warn: #f0a63a; --bad: #ff6b6b; --bad-soft: #3a1b1d; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px }
+.wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em }
+h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.1 }
+h2 { font-size: 20px }
+h3 { font-size: 16px }
+p { margin: 0 }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600 }
+.muted { color: var(--muted) }
+button { font: inherit; cursor: pointer }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px }
+.btn { border: 1px solid var(--accent); background: var(--accent); color: var(--surface); padding: 10px 18px; border-radius: 8px; font-weight: 600 }
+.btn.ghost { background: transparent; color: var(--accent) }
+.btn.quiet { background: transparent; border-color: var(--line); color: var(--muted) }
+.btn:disabled { opacity: .5; cursor: default }
+
+/* Home */
+.intro { display: flex; flex-direction: column; gap: 10px; max-width: 64ch }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center }
+.controls label { display: flex; gap: 8px; align-items: center; font-weight: 500 }
+select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink) }
+.sets { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px }
+.set { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 10px; text-align: left; color: var(--ink) }
+.set:hover { border-color: var(--accent) }
+.set .num { font-family: var(--f-num); font-size: 13px; color: var(--accent) }
+.set .ex { font-family: var(--f-num); font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.set .best { font-size: 13px; color: var(--muted); margin-top: auto; font-variant-numeric: tabular-nums }
+.guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; border-top: 1px solid var(--line); padding-top: 20px }
+.guide ol { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px }
+.guide li { max-width: 60ch }
+
+/* Quiz */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 22px }
+.qhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap }
+.dots { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--line) }
+.dot.cur { background: var(--accent) }
+.dot.ok { background: var(--good) }
+.dot.no { background: var(--bad) }
+.timer { position: relative; width: 86px; height: 86px; flex: none }
+.timer svg { width: 100%; height: 100%; transform: rotate(-90deg) }
+.timer .track { stroke: var(--line); fill: none }
+.timer .arc { stroke: var(--accent); fill: none; stroke-linecap: round; transition: stroke .2s }
+.timer .t { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--f-num); font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums }
+.timer.warn .arc { stroke: var(--warn) } .timer.warn .t { color: var(--warn) }
+.timer.over .arc { stroke: var(--bad) } .timer.over .t { color: var(--bad) }
+.timer.over { animation: pulse 1s ease-in-out infinite }
+@keyframes pulse { 50% { opacity: .6 } }
+@media (prefers-reduced-motion: reduce) { .timer.over { animation: none } }
+.seq { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.term { font-family: var(--f-num); font-weight: 700; font-size: clamp(20px, 4.4vw, 30px); min-width: 2.6em; padding: 10px 14px; border-radius: 8px; background: var(--bg); text-align: center; font-variant-numeric: tabular-nums }
+.term.blank { background: var(--accent-soft); color: var(--accent); border: 2px dashed var(--accent) }
+.term.blank.ok { background: var(--good-soft); color: var(--good); border-color: var(--good); border-style: solid }
+.term.blank.no { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); border-style: solid }
+.diffs { display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--f-num); font-size: 13px; color: var(--muted) }
+.answer { display: flex; gap: 10px; flex-wrap: wrap; align-items: center }
+.answer input { font-family: var(--f-num); font-size: 22px; font-weight: 700; width: 9ch; padding: 9px 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink) }
+.answer input:focus { border-color: var(--accent); outline: none }
+.pm { font-family: var(--f-num); font-size: 18px; width: 46px; height: 48px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink) }
+.hint { font-size: 13px; color: var(--muted) }
+.fb { border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line) }
+.fb.ok { background: var(--good-soft); border-color: var(--good) }
+.fb.no { background: var(--bad-soft); border-color: var(--bad) }
+.verdict { font-family: var(--f-display); font-weight: 700; font-size: 20px }
+.fb.ok .verdict { color: var(--good) } .fb.no .verdict { color: var(--bad) }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; margin-left: 8px; vertical-align: middle; font-family: var(--f-body) }
+.rule { font-weight: 600 }
+.work { font-family: var(--f-num); font-size: 14px }
+.trap { font-size: 14px; border-left: 3px solid var(--warn); padding-left: 10px }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between }
+
+/* Summary */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px }
+.stat { background: var(--bg); border-radius: 10px; padding: 14px }
+.stat b { display: block; font-family: var(--f-num); font-size: 26px; font-variant-numeric: tabular-nums }
+.review { display: flex; flex-direction: column; gap: 10px }
+.ritem { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 4px }
+.ritem .s { font-family: var(--f-num); font-size: 14px; overflow-wrap: anywhere }
+.tag { font-size: 12px; font-weight: 600 }
+.tag.ok { color: var(--good) } .tag.no { color: var(--bad) }
+kbd { font-family: var(--f-num); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(() => {
+/* ---------- helpers ---------- */
+const R = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = a => a[R(0, a.length - 1)];
+const nz = (a, b) => { let v; do { v = R(a, b); } while (v === 0); return v; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = R(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clean = n => Math.round(n * 10000) / 10000;
+const f = n => { n = clean(n); return n < 0 ? "−" + Math.abs(n) : String(n); };
+const op = n => n < 0 ? "− " + f(-n) : "+ " + f(n);
+const diffs = t => t.slice(1).map((v, i) => clean(v - t[i]));
+const PRIMES = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113];
+const dsum = n => String(Math.abs(n)).split("").reduce((s, d) => s + +d, 0);
+const ord = n => n + (["th","st","nd","rd"][(n % 100 > 10 && n % 100 < 14) ? 0 : n % 10] || "th");
+
+/* ---------- generators ----------
+   each returns { terms, rule, calc(i) -> worked step for term i, min: earliest index that may be blank } */
+const G = {
+  // Series 1: differences
+  constDiff() { const a = R(-20, 60), d = nz(-15, 19), t = [...Array(7)].map((_, i) => a + d * i);
+    return { name: "Constant difference", terms: t, rule: `Add ${f(d)} every step.`, calc: i => `${f(t[i-1])} ${op(d)} = ${f(t[i])}`, min: 2 }; },
+  secondOrder() { const a = R(1, 40), d0 = R(-5, 8), s = nz(-4, 6), t = [a]; for (let i = 0; i < 6; i++) t.push(t[i] + d0 + s * i);
+    const d = diffs(t); return { name: "Growing difference", terms: t, rule: `The gaps change by ${f(s)} each time (${d.map(f).join(", ")}).`, calc: i => `${f(t[i-1])} ${op(d[i-1])} = ${f(t[i])}`, min: 3, showDiffs: true }; },
+  diffGeom() { const m = pick([2, 2, 3]), d0 = m === 3 ? R(1, 2) : R(1, 5), a = R(-10, 30), t = [a]; for (let i = 0; i < 6; i++) t.push(t[i] + d0 * m ** i);
+    const d = diffs(t); return { name: "Multiplying difference", terms: t, rule: `Each gap is ${m}× the previous gap (${d.map(f).join(", ")}).`, calc: i => `${f(t[i-1])} ${op(d[i-1])} = ${f(t[i])}`, min: 3, showDiffs: true }; },
+  diffSquares() { const usePrimes = Math.random() < 0.5, k = usePrimes ? R(0, 3) : R(1, 4), a = R(-5, 25), t = [a];
+    const g = i => usePrimes ? PRIMES[k + i] : (k + i) ** 2; for (let i = 0; i < 6; i++) t.push(t[i] + g(i));
+    const d = diffs(t); return { name: usePrimes ? "Prime differences" : "Square differences", terms: t, rule: `The gaps are consecutive ${usePrimes ? "primes" : "square numbers"}: ${d.map(f).join(", ")}.`, calc: i => `${f(t[i-1])} ${op(d[i-1])} = ${f(t[i])}`, min: 3, showDiffs: true }; },
+  altDiff() { const a = R(3, 15); let b; do { b = R(1, 14); } while (b === a); const s = R(-5, 30), t = [s]; for (let i = 0; i < 7; i++) t.push(t[i] + (i % 2 ? -b : a));
+    return { name: "Alternating differences", terms: t, rule: `The steps alternate: ${op(a)}, then ${op(-b)}.`, calc: i => `${f(t[i-1])} ${op(t[i]-t[i-1])} = ${f(t[i])}`, min: 3, showDiffs: true }; },
+
+  // Series 2: multiplicative
+  ratio() { const r = pick([2, 3, -2, -3, 0.5, 1.5, 4]); let a, n = 7;
+    if (r === 0.5) a = R(1, 5) * 64; else if (r === 1.5) a = pick([64, 128]); else if (r === 4) { a = R(1, 3); n = 6; } else if (Math.abs(r) === 3) a = R(1, 3); else a = R(1, 6);
+    const t = [a]; for (let i = 1; i < n; i++) t.push(t[i-1] * r);
+    return { name: "Constant ratio", terms: t, rule: r === 0.5 ? "Halve each term (× 0.5)." : `Multiply by ${f(r)} each step.`, calc: i => `${f(t[i-1])} × ${f(r)} = ${f(t[i])}`, min: 2 }; },
+  mulAdd() { const m = pick([2, 2, 3]), c = nz(-5, 7), n = m === 3 ? 6 : 7, t = [R(1, 6)]; for (let i = 1; i < n; i++) t.push(t[i-1] * m + c);
+    return { name: "Multiply then add", terms: t, rule: `Multiply by ${m}, then ${c < 0 ? "subtract " + -c : "add " + c}.`, calc: i => `${f(t[i-1])} × ${m} ${op(c)} = ${f(t[i])}`, min: 3 }; },
+  incMult() { const k = R(1, 2), t = [R(1, 3)]; for (let i = 1; i < 6; i++) t.push(t[i-1] * (k + i));
+    return { name: "Increasing multiplier", terms: t, rule: `The multiplier grows by one each step: ×${k+1}, ×${k+2}, ×${k+3}, …`, calc: i => `${f(t[i-1])} × ${k + i} = ${f(t[i])}`, min: 2 }; },
+  mulAddIndex() { const m = 2, sgn = pick([1, -1]), t = [R(2, 8)]; for (let i = 1; i < 7; i++) t.push(t[i-1] * m + sgn * i);
+    return { name: "Multiply, then add the step number", terms: t, rule: `Double the term, then ${sgn > 0 ? "add" : "subtract"} 1, 2, 3, … in turn.`, calc: i => `${f(t[i-1])} × 2 ${op(sgn * i)} = ${f(t[i])}`, min: 3 }; },
+  squarePrev() { const c = pick([-2, -1, 1, 2]), t = [pick([2, 3])]; for (let i = 1; i < 5; i++) t.push(t[i-1] ** 2 + c);
+    if (Math.abs(t[4]) > 100000) return null;
+    return { name: "Square the previous term", terms: t, rule: `Square the previous term, then ${c < 0 ? "subtract " + -c : "add " + c}.`, calc: i => `${f(t[i-1])}² ${op(c)} = ${f(t[i])}`, min: 2 }; },
+
+  // Series 3: alternating & interleaved
+  interleave() { const a1 = R(1, 30), d1 = nz(-6, 9), a2 = R(1, 40), d2 = nz(-8, 10), t = [];
+    for (let i = 0; i < 8; i++) t.push(i % 2 ? a2 + d2 * ((i - 1) / 2) : a1 + d1 * (i / 2));
+    return { name: "Two interleaved sequences", terms: t, rule: `Two sequences take turns: 1st, 3rd, 5th… go ${op(d1)}; 2nd, 4th, 6th… go ${op(d2)}.`, calc: i => `${f(t[i-2])} ${op(i % 2 ? d2 : d1)} = ${f(t[i])} (two places back)`, min: 4 }; },
+  interleaveMix() { const a1 = R(1, 20), d1 = nz(-5, 8), b = R(1, 4), m = pick([2, 3]), t = [];
+    for (let i = 0; i < 8; i++) t.push(i % 2 ? b * m ** ((i - 1) / 2) : a1 + d1 * (i / 2));
+    return { name: "Interleaved arithmetic + geometric", terms: t, rule: `Odd positions go ${op(d1)}; even positions multiply by ${m}.`, calc: i => i % 2 ? `${f(t[i-2])} × ${m} = ${f(t[i])} (two places back)` : `${f(t[i-2])} ${op(d1)} = ${f(t[i])} (two places back)`, min: 4 }; },
+  altOps() { const a = nz(-6, 9), m = pick([2, 3]), mulFirst = Math.random() < 0.5, t = [R(1, 9)];
+    for (let i = 1; i < 7; i++) t.push(((i % 2 === 1) === mulFirst) ? t[i-1] * m : t[i-1] + a);
+    const s = mulFirst ? `×${m}, then ${op(a)}` : `${op(a)}, then ×${m}`;
+    return { name: "Alternating operations", terms: t, rule: `Operations alternate: ${s}, repeating.`, calc: i => ((i % 2 === 1) === mulFirst) ? `${f(t[i-1])} × ${m} = ${f(t[i])}` : `${f(t[i-1])} ${op(a)} = ${f(t[i])}`, min: 3 }; },
+  cycleDiffs() { const ds = [nz(-9, 12), nz(-9, 12), nz(-9, 12)]; if (ds[0] === ds[1] && ds[1] === ds[2]) return null; const t = [R(0, 30)];
+    for (let i = 0; i < 7; i++) t.push(t[i] + ds[i % 3]);
+    return { name: "Repeating cycle of steps", terms: t, rule: `A three-step cycle repeats: ${ds.map(op).join(", ")}.`, calc: i => `${f(t[i-1])} ${op(ds[(i-1) % 3])} = ${f(t[i])}`, min: 4, showDiffs: true }; },
+  threeOps() { const a = R(2, 9), b = R(1, 6), t = [R(1, 8)], ops = [x => x + a, x => x * 2, x => x - b], lbl = [op(a), "× 2", op(-b)];
+    for (let i = 0; i < 7; i++) t.push(ops[i % 3](t[i]));
+    return { name: "Three-operation cycle", terms: t, rule: `The operations cycle: ${lbl.join(", ")}, then repeat.`, calc: i => `${f(t[i-1])} ${lbl[(i-1) % 3]} = ${f(t[i])}`, min: 4 }; },
+
+  // Series 4: recursive
+  fib() { const t = [R(1, 6), R(1, 8)]; for (let i = 2; i < 8; i++) t.push(t[i-1] + t[i-2]);
+    return { name: "Fibonacci-style", terms: t, rule: "Each term is the sum of the two before it.", calc: i => `${f(t[i-2])} + ${f(t[i-1])} = ${f(t[i])}`, min: 3 }; },
+  trib() { const t = [R(0, 3), R(1, 3), R(1, 4)]; for (let i = 3; i < 8; i++) t.push(t[i-1] + t[i-2] + t[i-3]);
+    return { name: "Sum of previous three", terms: t, rule: "Each term is the sum of the three before it.", calc: i => `${f(t[i-3])} + ${f(t[i-2])} + ${f(t[i-1])} = ${f(t[i])}`, min: 4 }; },
+  fibK() { const k = nz(-3, 4), t = [R(1, 6), R(2, 8)]; for (let i = 2; i < 7; i++) t.push(t[i-1] + t[i-2] + k);
+    return { name: "Two-term sum with adjustment", terms: t, rule: `Add the two previous terms, then ${k < 0 ? "subtract " + -k : "add " + k}.`, calc: i => `${f(t[i-2])} + ${f(t[i-1])} ${op(k)} = ${f(t[i])}`, min: 3 }; },
+  diffRec() { const t = [R(3, 15), R(3, 20)]; if (t[0] === t[1]) t[1]++; for (let i = 2; i < 8; i++) t.push(t[i-1] - t[i-2]);
+    return { name: "Difference of previous two", terms: t, rule: "Each term is the previous term minus the one before it (the pattern repeats every six terms).", calc: i => `${f(t[i-1])} − ${t[i-2] < 0 ? "(" + f(t[i-2]) + ")" : f(t[i-2])} = ${f(t[i])}`, min: 3 }; },
+  prodRec() { const seeds = pick([[1, 2], [2, 1], [1, 3], [2, 2]]), t = seeds.slice(), n = seeds[1] === 3 || seeds[0] === 2 && seeds[1] === 2 ? 6 : 7;
+    for (let i = 2; i < n; i++) t.push(t[i-1] * t[i-2]);
+    return { name: "Product of previous two", terms: t, rule: "Each term is the product of the two before it.", calc: i => `${f(t[i-2])} × ${f(t[i-1])} = ${f(t[i])}`, min: 3 }; },
+  weighted() { const w = pick([2, 3]), t = [R(1, 4), R(1, 5)]; for (let i = 2; i < 7; i++) t.push(t[i-1] + w * t[i-2]);
+    return { name: "Weighted recurrence", terms: t, rule: `Each term is the previous term plus ${w}× the term before that.`, calc: i => `${f(t[i-1])} + ${w} × ${f(t[i-2])} = ${f(t[i])}`, min: 3 }; },
+
+  // Series 5: powers, primes, special
+  squares() { const k = R(0, 6), c = R(-5, 5), t = [...Array(7)].map((_, i) => (k + i + 1) ** 2 + c);
+    return { name: "Squares with an offset", terms: t, rule: c ? `Square numbers ${c < 0 ? "minus " + -c : "plus " + c}: ${k+1}², ${k+2}², ${k+3}², … then ${op(c)}.` : `Consecutive square numbers starting at ${k+1}².`, calc: i => `${k + i + 1}² ${c ? op(c) + " " : ""}= ${f(t[i])}`, min: 2 }; },
+  cubes() { const k = R(0, 2), c = pick([0, 0, -1, 1, 2, -2]), t = [...Array(6)].map((_, i) => (k + i + 1) ** 3 + c);
+    return { name: "Cubes", terms: t, rule: c ? `Cube numbers ${op(c)}: ${k+1}³, ${k+2}³, … then ${op(c)}.` : `Consecutive cube numbers starting at ${k+1}³.`, calc: i => `${k + i + 1}³ ${c ? op(c) + " " : ""}= ${f(t[i])}`, min: 2 }; },
+  primes() { const v = pick(["plain", "plain", "double", "plus"]), s = R(0, 9), c = R(1, 5), g = p => v === "double" ? 2 * p : v === "plus" ? p + c : p;
+    const t = [...Array(7)].map((_, i) => g(PRIMES[s + i]));
+    const rule = v === "plain" ? `Consecutive prime numbers from ${PRIMES[s]}.` : v === "double" ? `Consecutive primes (from ${PRIMES[s]}) doubled.` : `Consecutive primes (from ${PRIMES[s]}) plus ${c}.`;
+    return { name: "Prime numbers", terms: t, rule, calc: i => v === "plain" ? `the next prime after ${f(t[i-1])} is ${f(t[i])}` : v === "double" ? `2 × ${PRIMES[s+i]} = ${f(t[i])}` : `${PRIMES[s+i]} + ${c} = ${f(t[i])}`, min: 2 }; },
+  triangular() { const pron = Math.random() < 0.5, k = R(1, 6), t = [...Array(7)].map((_, i) => { const n = k + i; return pron ? n * (n + 1) : n * (n + 1) / 2; });
+    return { name: pron ? "Pronic numbers" : "Triangular numbers", terms: t, rule: pron ? `n × (n + 1) for n = ${k}, ${k+1}, ${k+2}, … (gaps rise by 2).` : `Triangular numbers n(n + 1)/2 for n = ${k}, ${k+1}, … (gaps rise by 1).`, calc: i => { const n = k + i; return pron ? `${n} × ${n+1} = ${f(t[i])}` : `${n} × ${n+1} ÷ 2 = ${f(t[i])}`; }, min: 2, showDiffs: true }; },
+  pow2() { const b = pick([2, 2, 3]), c = pick([-1, 1, -2, 2, 3]), k = R(0, 3), n = b === 3 ? 6 : 7, t = [...Array(n)].map((_, i) => b ** (k + i) + c);
+    return { name: `Powers of ${b} with an offset`, terms: t, rule: `Powers of ${b} ${c < 0 ? "minus " + -c : "plus " + c}: ${b}^${k}, ${b}^${k+1}, …`, calc: i => `${b}^${k + i} ${op(c)} = ${f(t[i])}`, min: 2 }; },
+  digitSum() { const t = [R(10, 60)]; for (let i = 1; i < 7; i++) t.push(t[i-1] + dsum(t[i-1]));
+    return { name: "Add the digit sum", terms: t, rule: "Add the sum of the digits of the previous term.", calc: i => `${f(t[i-1])} + (${String(t[i-1]).split("").join(" + ")}) = ${f(t[i])}`, min: 2 }; },
+  sqCube() { const k = R(1, 2), t = [...Array(7)].map((_, i) => (k + i) ** (i % 2 ? 3 : 2));
+    return { name: "Alternating squares and cubes", terms: t, rule: `Take n = ${k}, ${k+1}, ${k+2}, …; square it at odd positions and cube it at even positions.`, calc: i => `${k + i}${i % 2 ? "³" : "²"} = ${f(t[i])}`, min: 3 }; },
+};
+
+const SETS = [
+  { id: "s1", name: "Differences", blurb: "Constant, growing, alternating and patterned gaps between terms.", gens: ["constDiff", "secondOrder", "diffGeom", "diffSquares", "altDiff"], ex: "4, 7, 13, 22, 34, ?" },
+  { id: "s2", name: "Multiplication", blurb: "Ratios, multiply-then-add rules and multipliers that change.", gens: ["ratio", "mulAdd", "incMult", "mulAddIndex", "squarePrev"], ex: "3, 7, 15, 31, 63, ?" },
+  { id: "s3", name: "Alternating", blurb: "Two sequences woven together, and repeating cycles of operations.", gens: ["interleave", "interleaveMix", "altOps", "cycleDiffs", "threeOps"], ex: "2, 20, 5, 17, 8, 14, ?" },
+  { id: "s4", name: "Recursive", blurb: "Terms built from the previous two or three terms.", gens: ["fib", "trib", "fibK", "diffRec", "prodRec", "weighted"], ex: "3, 4, 7, 11, 18, ?" },
+  { id: "s5", name: "Special numbers", blurb: "Squares, cubes, primes, powers and digit tricks.", gens: ["squares", "cubes", "primes", "triangular", "pow2", "digitSum", "sqCube"], ex: "1, 8, 9, 64, 25, ?" },
+  { id: "s6", name: "Exam mix", blurb: "Everything shuffled, with blanks often in the middle. Run this one last.", gens: null, ex: "12, ?, 30, 42, 56" },
+];
+const ALL = Object.keys(G);
+
+function makeQuestion(genName, midChance) {
+  for (let tries = 0; tries < 40; tries++) {
+    const q = G[genName]();
+    if (!q || q.terms.some(v => !isFinite(v) || Math.abs(v) > 99999 || clean(v) !== Math.round(v * 100) / 100)) continue;
+    const last = q.terms.length - 1;
+    const idx = Math.random() < midChance ? R(Math.max(q.min, 2), last - 1) : last;
+    return { ...q, gen: genName, idx, answer: clean(q.terms[idx]) };
+  }
+  return makeQuestion("constDiff", midChance);
+}
+function buildSet(set) {
+  const out = [], seen = new Set();
+  let pool = [];
+  while (out.length < 10) {
+    if (!pool.length) pool = shuffle(set.gens || ALL);
+    const g = pool.pop(), q = makeQuestion(g, set.gens ? 0.25 : 0.5), key = q.terms.join(",");
+    if (seen.has(key)) continue; seen.add(key); out.push(q);
+  }
+  return out;
+}
+
+/* ---------- storage ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("seqdrill:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("seqdrill:" + k, JSON.stringify(v)); } catch {} },
+};
+
+/* ---------- state & rendering ---------- */
+const app = document.getElementById("app");
+const S = { limit: store.get("limit", 45), set: null, qs: [], i: 0, results: [], t0: 0, timerId: null, answered: false, queue: [] };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function home() {
+  stopTimer();
+  const best = store.get("best", {});
+  app.innerHTML = `
+    <div class="intro">
+      <span class="eyebrow">Suited-style number series practice</span>
+      <h1>Sequence Drills</h1>
+      <p class="muted">Six series of ten questions. Each question shows a sequence with one missing term. Type the number and press <kbd>Enter</kbd>. The clock goes red when your time is up, but you can still answer; overtime answers are flagged. Questions are generated fresh every run.</p>
+    </div>
+    <div class="controls">
+      <label for="limit">Time per question
+        <select id="limit">${[30, 45, 60, 90].map(s => `<option value="${s}" ${s === S.limit ? "selected" : ""}>${s} seconds</option>`).join("")}</select>
+      </label>
+      <button class="btn ghost" id="all">Run all 60 in order</button>
+    </div>
+    <div class="sets">
+      ${SETS.map((s, k) => `<button class="set" data-k="${k}">
+        <span class="num">Series ${k + 1} · 10 questions</span>
+        <h3>${s.name}</h3>
+        <p class="muted">${s.blurb}</p>
+        <span class="ex">${s.ex}</span>
+        <span class="best">${best[s.id] != null ? `Best ${best[s.id]}/10` : "Not attempted"}</span>
+      </button>`).join("")}
+    </div>
+    <div class="guide">
+      <div>
+        <h2>A checking order that works</h2>
+        <ol>
+          <li>Write the gaps between terms. Constant? Done.</li>
+          <li>If the gaps change, take the gaps of the gaps, or check if gaps multiply.</li>
+          <li>Big jumps or a sign flip suggest multiplication. Check the ratio, then ×n ± c.</li>
+          <li>Zig-zag values suggest two interleaved sequences. Read every other term.</li>
+          <li>Each term near the sum of the previous two suggests a recursive rule.</li>
+          <li>Still stuck: compare terms to squares, cubes, primes, and powers of 2.</li>
+        </ol>
+      </div>
+      <div>
+        <h2>On the real test</h2>
+        <ol>
+          <li>Suited's cognitive section runs about 15 minutes and the pacing is tight.</li>
+          <li>Don't sink two minutes into one item. Make a best guess and move on.</li>
+          <li>Verify your rule on every visible term, not just the last two.</li>
+          <li>The blank can sit in the middle. Use the terms on both sides to check.</li>
+        </ol>
+      </div>
+    </div>`;
+  app.querySelector("#limit").onchange = e => { S.limit = +e.target.value; store.set("limit", S.limit); };
+  app.querySelectorAll(".set").forEach(b => b.onclick = () => startSets([+b.dataset.k]));
+  app.querySelector("#all").onclick = () => startSets([0, 1, 2, 3, 4, 5]);
+}
+
+function startSets(list) { S.queue = list.slice(); nextSet(); }
+function nextSet() {
+  const k = S.queue.shift(); S.setK = k; S.set = SETS[k]; S.qs = buildSet(S.set); S.i = 0; S.results = []; question();
+}
+
+function question() {
+  const q = S.qs[S.i]; S.answered = false;
+  const terms = q.terms.map((v, j) => j === q.idx ? `<span class="term blank" id="blank">?</span>` : `<span class="term">${f(v)}</span>`).join("");
+  app.innerHTML = `
+    <div class="card">
+      <div class="qhead">
+        <div>
+          <span class="eyebrow">Series ${S.setK + 1} · ${S.set.name}</span>
+          <h2>Question ${S.i + 1} of 10</h2>
+          <div class="dots">${S.qs.map((_, j) => `<span class="dot ${j < S.results.length ? (S.results[j].ok ? "ok" : "no") : j === S.i ? "cur" : ""}"></span>`).join("")}</div>
+        </div>
+        <div class="timer" id="timer" role="timer" aria-live="off">
+          <svg viewBox="0 0 86 86"><circle class="track" cx="43" cy="43" r="38" stroke-width="6"/><circle class="arc" id="arc" cx="43" cy="43" r="38" stroke-width="6" stroke-dasharray="238.76" stroke-dashoffset="0"/></svg>
+          <span class="t" id="tlabel">${fmtTime(S.limit)}</span>
+        </div>
+      </div>
+      <p class="muted">Find the missing number.</p>
+      <div class="seq" aria-label="sequence">${terms}</div>
+      <div id="slot">
+        <form class="answer" id="form" autocomplete="off">
+          <button type="button" class="pm" id="pm" aria-label="Toggle minus sign">±</button>
+          <input id="ans" type="text" inputmode="decimal" aria-label="Your answer" placeholder="?">
+          <button class="btn" type="submit">Submit</button>
+          <button class="btn quiet" type="button" id="skip">Skip</button>
+        </form>
+        <p class="hint">Decimals and fractions like 2.5 or 5/2 are accepted.</p>
+      </div>
+    </div>
+    <div class="row"><button class="btn quiet" id="quit">Quit to menu</button></div>`;
+  const inp = app.querySelector("#ans"); inp.focus();
+  app.querySelector("#pm").onclick = () => { inp.value = inp.value.startsWith("-") ? inp.value.slice(1) : "-" + inp.value; inp.focus(); };
+  app.querySelector("#form").onsubmit = e => { e.preventDefault(); if (inp.value.trim() !== "") submit(inp.value); else inp.focus(); };
+  app.querySelector("#skip").onclick = () => submit(null);
+  app.querySelector("#quit").onclick = home;
+  startTimer();
+}
+
+const fmtTime = s => { s = Math.max(0, Math.ceil(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+function startTimer() {
+  stopTimer(); S.t0 = performance.now();
+  const arc = app.querySelector("#arc"), lab = app.querySelector("#tlabel"), box = app.querySelector("#timer"), C = 238.76;
+  const tick = () => {
+    const el = (performance.now() - S.t0) / 1000, left = S.limit - el;
+    if (left > 0) { arc.style.strokeDashoffset = String(C * (1 - left / S.limit)); lab.textContent = fmtTime(left); box.classList.toggle("warn", left <= 10); }
+    else { arc.style.strokeDashoffset = "0"; box.classList.remove("warn"); box.classList.add("over"); lab.textContent = "+" + fmtTime(-left); }
+  };
+  tick(); S.timerId = setInterval(tick, 200);
+}
+function stopTimer() { if (S.timerId) clearInterval(S.timerId); S.timerId = null; }
+
+function parseAns(s) {
+  s = s.trim().replace(/[−–]/g, "-").replace(/,/g, "");
+  const m = s.match(/^(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)$/);
+  if (m) return +m[2] === 0 ? NaN : +m[1] / +m[2];
+  return s === "" ? NaN : Number(s);
+}
+
+function trapNote(q, val) {
+  if (val == null || isNaN(val)) return "";
+  const t = q.terms, i = q.idx, notes = [];
+  if (i === t.length - 1 && i >= 2) {
+    const linear = clean(t[i-1] + (t[i-1] - t[i-2]));
+    if (clean(val) === linear && linear !== q.answer) notes.push(`You repeated the last gap (${op(t[i-1] - t[i-2])}). The gaps here are not constant, so check how they change across the whole sequence.`);
+    if (t[i-2] !== 0) { const ratio = clean(t[i-1] * (t[i-1] / t[i-2])); if (clean(val) === ratio && ratio !== q.answer && ratio !== linear) notes.push("You repeated the last ratio. Test that ratio on the earlier terms too; it doesn't hold all the way back."); }
+  }
+  if (Math.abs(clean(val)) === Math.abs(q.answer) && clean(val) !== q.answer) notes.push("Right size, wrong sign. Check the direction of the step.");
+  return notes.map(n => `<p class="trap">${n}</p>`).join("");
+}
+
+function submit(raw) {
+  if (S.answered) return; S.answered = true; stopTimer();
+  const q = S.qs[S.i], time = (performance.now() - S.t0) / 1000, over = time > S.limit;
+  const val = raw == null ? null : parseAns(raw), ok = val != null && !isNaN(val) && Math.abs(val - q.answer) < 1e-6;
+  S.results.push({ q, val, ok, time, over, skipped: raw == null });
+  const blank = app.querySelector("#blank"); blank.textContent = f(q.answer); blank.classList.add(ok ? "ok" : "no");
+  const d = diffs(q.terms);
+  const yourLine = raw == null ? "You skipped this one." : isNaN(val) ? `“${esc(raw)}” isn't a number I can read.` : ok ? `You answered ${f(val)}.` : `You answered ${f(val)}; the answer is ${f(q.answer)}.`;
+  app.querySelector("#slot").innerHTML = `
+    <div class="fb ${ok ? "ok" : "no"}" role="status">
+      <div class="verdict">${ok ? "Correct" : raw == null ? "Skipped" : "Incorrect"}${over ? `<span class="pill" style="color:var(--bad)">Over time</span>` : ""}<span class="pill" style="color:var(--muted)">${time.toFixed(1)}s</span></div>
+      <p>${yourLine}</p>
+      <p><span class="rule">${q.name}.</span> ${q.rule}</p>
+      <p class="work">${ord(q.idx + 1)} term: ${q.calc(q.idx)}</p>
+      ${q.showDiffs || !ok ? `<div class="diffs"><span>Gaps:</span>${d.map(x => `<span>${op(x).replace(" ", "")}</span>`).join("")}</div>` : ""}
+      ${ok ? "" : trapNote(q, val)}
+    </div>
+    <div class="row" style="margin-top:14px">
+      <span class="hint">Press <kbd>Enter</kbd> to continue</span>
+      <button class="btn" id="next">${S.i < 9 ? "Next question" : "See results"}</button>
+    </div>`;
+  const nb = app.querySelector("#next"); nb.focus(); nb.onclick = advance;
+  const dot = app.querySelectorAll(".dot")[S.i]; dot.className = "dot " + (ok ? "ok" : "no");
+}
+function advance() { if (S.i < 9) { S.i++; question(); } else summary(); }
+
+function summary() {
+  stopTimer();
+  const r = S.results, score = r.filter(x => x.ok).length, avg = r.reduce((s, x) => s + x.time, 0) / r.length, overN = r.filter(x => x.over).length;
+  const okInTime = r.filter(x => x.ok && !x.over).length;
+  const best = store.get("best", {}); if (best[S.set.id] == null || score > best[S.set.id]) { best[S.set.id] = score; store.set("best", best); }
+  const misses = {}; r.filter(x => !x.ok).forEach(x => misses[x.q.name] = (misses[x.q.name] || 0) + 1);
+  const weak = Object.entries(misses).sort((a, b) => b[1] - a[1]).map(([n, c]) => `${n}${c > 1 ? ` (×${c})` : ""}`).join(", ");
+  const more = S.queue.length > 0;
+  app.innerHTML = `
+    <div class="card">
+      <div>
+        <span class="eyebrow">Series ${S.setK + 1} · ${S.set.name} · complete</span>
+        <h1>${score} / 10</h1>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>${okInTime}</b><span class="muted">correct within time</span></div>
+        <div class="stat"><b>${avg.toFixed(1)}s</b><span class="muted">average per question</span></div>
+        <div class="stat"><b>${overN}</b><span class="muted">over the ${S.limit}s limit</span></div>
+      </div>
+      ${weak ? `<p><span class="rule">Review:</span> ${weak}</p>` : `<p class="rule" style="color:var(--good)">A clean sweep.</p>`}
+      <div class="row">
+        <div class="row" style="justify-content:flex-start">
+          ${more ? `<button class="btn" id="cont">Start series ${S.queue[0] + 1}</button>` : ""}
+          <button class="btn ${more ? "ghost" : ""}" id="again">Retry with new questions</button>
+        </div>
+        <button class="btn quiet" id="menu">Back to menu</button>
+      </div>
+    </div>
+    <div class="review">
+      <h2>Question review</h2>
+      ${r.map((x, j) => `<div class="ritem">
+        <span class="tag ${x.ok ? "ok" : "no"}">Q${j + 1} · ${x.ok ? "Correct" : x.skipped ? "Skipped" : "Incorrect"} · ${x.time.toFixed(1)}s${x.over ? " · over time" : ""}</span>
+        <span class="s">${x.q.terms.map((v, k) => k === x.q.idx ? `[${f(v)}]` : f(v)).join(", ")}${!x.ok && x.val != null && !isNaN(x.val) ? `  (you: ${f(x.val)})` : ""}</span>
+        <span class="muted">${x.q.rule}</span>
+      </div>`).join("")}
+    </div>`;
+  if (more) app.querySelector("#cont").onclick = nextSet;
+  app.querySelector("#again").onclick = () => { S.queue.unshift(S.setK); nextSet(); };
+  app.querySelector("#menu").onclick = home;
+  (app.querySelector("#cont") || app.querySelector("#again")).focus();
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && S.answered && document.activeElement?.id !== "next" && app.querySelector("#next")) { e.preventDefault(); advance(); }
+});
+
+window.__seq = { G, buildSet, SETS, makeQuestion };
+home();
+})();
+</script>
+</body>
+</html>
